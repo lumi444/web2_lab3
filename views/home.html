@@ -5,7 +5,7 @@
         <style>
             canvas{
                 border:1px solid #000000;
-                background-color: #f1f1f1;
+                background-color: #e3dbe4;
 
             }
         </style>
@@ -17,37 +17,101 @@
                 return Math.floor(Math.random() * (max - min + 1) + min);
             }
 
+            function getRandomX(min, max) {
+                min = Math.ceil(min);
+                max = Math.floor(max);
+                return Math.floor(Math.random() * (max - min + 1) + min);
+            }
+
+            function getRandomY(min, max) {
+                min = Math.ceil(min);
+                max = Math.floor(max);
+                return Math.floor(Math.random() * (max - min + 1) + min);
+            }
+
+            function getRandomSpeed(min, max) {
+                min = Math.ceil(min);
+                max = Math.floor(max);
+                return Math.floor(Math.random() * (max - min + 1) + min);
+            }
+
+
             var numberOfComponents = getRandomIntInclusive(2,8);
             var myGamePiece;
+            var myGamePieceList=[];
+            var indexOfKilled = -1;
+            var numberOfKilled = 0;
+            var gameOver = false;
             var myGameArea= { 
                 canvas:document.createElement("canvas"), 
+                
                 start:function() { 
+                
                 this.canvas.id= "myGameCanvas"; 
                 this.canvas.width= 480; 
                 this.canvas.height= 270; 
-                this.context= this.canvas.getContext("2d");
-                console.log("u+")
                 
+                this.context= this.canvas.getContext("2d");
+                
+                
+                myCanvas = this.canvas;
+                myCanvas.addEventListener('click', function(event) {
+                    var rect = myCanvas.getBoundingClientRect();
+                    var x = event.clientX - rect.left;
+                    var y = event.clientY - rect.top;
+                    
+                    myGamePieceList.forEach((gp) => {
+                        x1 = gp.x + gp.width/ -2;
+                        y1 = gp.y + gp.height/ -2;
+                        if((x1 <= x && x <= (x1+70)) && (y1 <= y && y <= (y1+70))){
+                            
+                            indexOfKilled = myGamePieceList.indexOf(gp);
+                            console.log("pogoden "+indexOfKilled);
+                            
+                        }
+                    });
+
+                    
+
+                    
+                    console.log("x: " + x + " y: " + y); 
+                }, false);
+                
+
+                
+
+               
                 document.body.insertBefore(this.canvas, document.body.childNodes[0]); 
                 this.frameNo= 0; 
                 this.interval= setInterval(updateGameArea, 20); 
                 
+                
             }, 
-                stop:function() { clearInterval(this.interval); }, 
+                stop:function() {
+                    
+                    if(gameOver === true){
+                        this.context.font = "30px Comic Sans MS";
+                        this.context.fillStyle = "green";
+                        this.context.textAlign = "center";
+                        this.context.fillText("Okay,\n You Win :)", this.canvas.width/2, this.canvas.height/2);
+                    }
+                    
+                    
+                    clearInterval(this.interval); }, 
                 clear:function() { this.context.clearRect(0, 0, this.canvas.width, this.canvas.height); } 
             }
 
             
 
             
-            function component(width, height, color,x,y,type){
-                this.type= type; 
+            function component(width, height, color){
+                
                 this.width= width; 
                 this.height= height; 
-                this.speed_x= 2;
-                this.speed_y= 2; 
-                this.x= x; 
-                this.y= y;
+                this.speed_x= getRandomSpeed(1,5);
+                this.speed_y= getRandomSpeed(1,5); 
+                this.x= getRandomX(50,400); 
+                this.y= getRandomY(70,250);
                 this.update= function() { 
                     ctx= myGameArea.context; 
                     ctx.save(); 
@@ -60,13 +124,13 @@
 
                 this.newPos= function() { 
                     if(this.x-this.width/ 2< 0) 
-                        this.speed_x= 2;
+                        this.speed_x= getRandomSpeed(2,10);
                     else if((this.x+ this.width/ 2) >= myGameArea.context.canvas.width) 
-                        this.speed_x= -2;
+                        this.speed_x= getRandomSpeed(-10,-2);
                     if(this.y-this.height/ 2< 0) 
-                        this.speed_y= -2;
+                        this.speed_y= getRandomSpeed(-10,-2);
                     else if((this.y+ this.height/ 2) >= myGameArea.context.canvas.height) 
-                        this.speed_y= 2;
+                        this.speed_y= getRandomSpeed(2,10);
                         
                     this.x+= this.speed_x; 
                     this.y-= this.speed_y; 
@@ -74,8 +138,13 @@
             }
 
             function startGame(){
+                color = ["#C0392B","#1bf2a8","#ab0ba1","#ffbf00","#11037d","#D35400","#3498DB","#F933FF"]
+                for(let i=0;i<numberOfComponents;i++){
+                    
+                    myGamePieceList.push(new component(70,70,color[i]));
+                }
                 
-                myGamePiece = new component(30,30,"red",150,150);
+                
                 
 
                 myGameArea.start();
@@ -83,13 +152,53 @@
 
             function updateGameArea() { 
                 myGameArea.clear(); 
-                myGamePiece.newPos(); 
-                myGamePiece.update(); 
                 
-               }
+                
+                if(indexOfKilled > -1){
+                    console.log("micemo"+indexOfKilled);
+                    console.log("prije "+myGamePieceList);
+                    numberOfKilled = numberOfKilled + 1;
+                    
+                    var first = myGamePieceList.slice(0,indexOfKilled);
+                    var second = myGamePieceList.slice(indexOfKilled+1, myGamePieceList.length);
+                    var finali = first.concat(second);
+                    myGamePieceList = finali;
+                    console.log("posli "+finali);
+
+                    if(numberOfComponents === numberOfKilled){
+                        gameOver = true;
+                        myGameArea.stop();
+                    }
+                    
+                    indexOfKilled=-1;
+                    
+                    
+                }
+
+                myGameArea.context.font = "20px Arial";
+                myGameArea.context.textAlign = "end";
+                myGameArea.context.textBaseline = "top"
+
+                myGameArea.context.fillText("Score: "+numberOfKilled+"/"+numberOfComponents, 465, 15);
+
+                
+
+                myGamePieceList.forEach((gp) => {
+                    gp.newPos();
+                    gp.update();
+                    
+                });
+
+
+                
+
+                }
+                
+               
         </script>
     </head>
     <body onload="startGame()">
-        <h1>Igrica</h1>
+        <h1 style="color:#4B2B4C;font-family:'Times New Roman', Times, serif">Shoot your shot... Good luck</h1>
+
     </body>
 </html>
